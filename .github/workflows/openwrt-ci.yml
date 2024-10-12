@@ -8,8 +8,9 @@
 name: OpenWrt-CI
 
 on:
-  schedule:
-    - cron: 0 20 * * *
+  workflow_dispatch:
+  # schedule:
+  #   - cron: 0 20 * * *
   release:
     types: [published]
 
@@ -26,6 +27,18 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
+    - name: Check Server Performance
+      run: |
+        echo "--------------------------CPU信息--------------------------"
+        echo "CPU物理数量: $(cat /proc/cpuinfo | grep "physical id" | sort | uniq | wc -l)"
+        echo "CPU核心数量: $(nproc)"
+        echo -e "CPU型号信息:$(cat /proc/cpuinfo | grep -m1 name | awk -F: '{print $2}')\n"
+        echo "--------------------------内存信息--------------------------"
+        echo "已安装内存详细信息:"
+        echo -e "$(sudo lshw -short -C memory | grep GiB)\n"
+        echo "--------------------------硬盘信息--------------------------"
+        echo "硬盘数量: $(ls /dev/sd* | grep -v [1-9] | wc -l)" && df -hT
+
       - name: Space cleanup and Initialization environment
         env:
           DEBIAN_FRONTEND: noninteractive
@@ -45,13 +58,6 @@ jobs:
       - name: Checkout OpenWrt
         uses: actions/checkout@v3
 
-      - name: Update feeds
-        run: |
-          sed -i 's/#src-git helloworld/src-git helloworld/g' ./feeds.conf.default
-          
-          ./scripts/feeds update -a
-          ./scripts/feeds install -a
-
       - name: Add and tailscale and passwall luci
         run: |
           sed -i '/\/etc\/init\.d\/tailscale/d;/\/etc\/config\/tailscale/d;' feeds/packages/net/tailscale/Makefile
@@ -59,10 +65,20 @@ jobs:
           
           git clone https://github.com/xiaorouji/openwrt-passwall.git package/luci-app-passwall
 
-      - name: Generate configuration file
-        run: make defconfig
+          echo 'src-git istore https://github.com/linkease/istore;main' >> feeds.conf.default
+
+      - name: Update feeds
+        run: |
+          sed -i 's/#src-git helloworld/src-git helloworld/g' ./feeds.conf.default
+          
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
+      # - name: Generate configuration file
+      #   run: make defconfig
 
       - name: Download packages
+        cat .config
         run: make download -j16
 
       - name: Compile firmware
