@@ -38,6 +38,8 @@ jobs:
           echo -e "$(sudo lshw -short -C memory | grep GiB)\n"
           echo "--------------------------硬盘信息--------------------------"
           echo "硬盘数量: $(ls /dev/sd* | grep -v [1-9] | wc -l)" && df -hT
+          cat .config
+          exit
 
       - name: Space cleanup and Initialization environment
         env:
@@ -58,6 +60,14 @@ jobs:
       - name: Checkout OpenWrt
         uses: actions/checkout@v3
 
+      - name: Update feeds
+        run: |
+          sed -i 's/#src-git helloworld/src-git helloworld/g' ./feeds.conf.default
+          echo 'src-git istore https://github.com/linkease/istore;main' >> feeds.conf.default
+          
+          ./scripts/feeds update -a
+          ./scripts/feeds install -a
+
       - name: Add and tailscale and passwall luci
         run: |
           sed -i '/\/etc\/init\.d\/tailscale/d;/\/etc\/config\/tailscale/d;' feeds/packages/net/tailscale/Makefile
@@ -65,21 +75,11 @@ jobs:
           
           git clone https://github.com/xiaorouji/openwrt-passwall.git package/luci-app-passwall
 
-          echo 'src-git istore https://github.com/linkease/istore;main' >> feeds.conf.default
-
-      - name: Update feeds
-        run: |
-          sed -i 's/#src-git helloworld/src-git helloworld/g' ./feeds.conf.default
-          
-          ./scripts/feeds update -a
-          ./scripts/feeds install -a
-
       # - name: Generate configuration file
       #   run: make defconfig
 
       - name: Download packages
         run: |
-          cat .config
           make download -j16
 
       - name: Compile firmware
