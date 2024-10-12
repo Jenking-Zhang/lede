@@ -10,6 +10,8 @@ name: OpenWrt-CI
 on:
   schedule:
     - cron: 0 20 * * *
+  release:
+    types: [published]
 
 permissions:
   contents: read
@@ -27,7 +29,7 @@ jobs:
         env:
           DEBIAN_FRONTEND: noninteractive
         run: |
-          docker rmi `docker images -q`
+          # docker rmi `docker images -q`
           sudo -E rm -rf /usr/share/dotnet /etc/mysql /etc/php /etc/apt/sources.list.d /usr/local/lib/android
           sudo -E apt-mark hold grub-efi-amd64-signed
           sudo -E apt update
@@ -45,8 +47,16 @@ jobs:
       - name: Update feeds
         run: |
           sed -i 's/#src-git helloworld/src-git helloworld/g' ./feeds.conf.default
+          
           ./scripts/feeds update -a
           ./scripts/feeds install -a
+
+      - name: Add and tailscale and passwall luci
+        run: |
+          sed -i '/\/etc\/init\.d\/tailscale/d;/\/etc\/config\/tailscale/d;' feeds/packages/net/tailscale/Makefile
+          git clone https://github.com/asvow/luci-app-tailscale package/luci-app-tailscale
+          
+          git clone https://github.com/xiaorouji/openwrt-passwall.git package/luci-app-passwall
 
       - name: Generate configuration file
         run: make defconfig
