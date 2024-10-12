@@ -23,8 +23,8 @@ jobs:
 
     name: Build OpenWrt Firmware
 
-    # runs-on: ubuntu-latest
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
+    # runs-on: ubuntu-22.04
 
     steps:
       - name: Check Server Performance
@@ -60,17 +60,21 @@ jobs:
 
       - name: Update feeds
         run: |
-          cat .config
-          exit
           sed -i 's/#src-git helloworld/src-git helloworld/g' ./feeds.conf.default
           echo 'src-git istore https://github.com/linkease/istore;main' >> feeds.conf.default
           
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
+      - name: Get latest Tailscale version
+        run: |
+          latest_version=$(curl -s https://api.github.com/repos/tailscale/tailscale/releases/latest | grep 'tag_name' | cut -d '"' -f 4)
+          echo "Latest Tailscale version: $latest_version"
+          sed -i "s/PKG_VERSION:=.*/PKG_VERSION:=${{ env.latest_version }}/" feeds/packages/net/tailscale/Makefile
+
       - name: Add and tailscale and passwall luci
         run: |
-          sed -i '/\/etc\/init\.d\/tailscale/d;/\/etc\/config\/tailscale/d;' feeds/packages/net/tailscale/Makefile
+          # sed -i '/\/etc\/init\.d\/tailscale/d;/\/etc\/config\/tailscale/d;' feeds/packages/net/tailscale/Makefile
           git clone https://github.com/asvow/luci-app-tailscale package/luci-app-tailscale
           
           git clone https://github.com/xiaorouji/openwrt-passwall.git package/luci-app-passwall
