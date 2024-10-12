@@ -38,8 +38,6 @@ jobs:
           echo -e "$(sudo lshw -short -C memory | grep GiB)\n"
           echo "--------------------------硬盘信息--------------------------"
           echo "硬盘数量: $(ls /dev/sd* | grep -v [1-9] | wc -l)" && df -hT
-          cat .config
-          exit
 
       - name: Space cleanup and Initialization environment
         env:
@@ -62,6 +60,8 @@ jobs:
 
       - name: Update feeds
         run: |
+          cat .config
+          exit
           sed -i 's/#src-git helloworld/src-git helloworld/g' ./feeds.conf.default
           echo 'src-git istore https://github.com/linkease/istore;main' >> feeds.conf.default
           
@@ -117,5 +117,5 @@ jobs:
       - name: Upload firmware
         uses: actions/upload-artifact@v3
         with:
-          name: OpenWrt_firmware
-          path: ./bin/targets/
+          name: openwrt-x86-64-generic-squashfs-combined-efi.img.gz
+          path: ./bin/targets/openwrt-x86-64-generic-squashfs-combined-efi.img.gz
