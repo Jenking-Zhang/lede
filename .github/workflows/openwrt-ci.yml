@@ -157,7 +157,7 @@ jobs:
           path: ./artifact/package/
 
       - name: Upload firmware ALL
-              uses: actions/upload-artifact@v3
-              with:
-                name: OpenWrt_firmware
-                path: ./bin/targets/
+        uses: actions/upload-artifact@v3
+        with:
+          name: OpenWrt_firmware
+          path: ./bin/targets/
