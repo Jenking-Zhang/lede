@@ -81,7 +81,10 @@ jobs:
         run: |
           latest_version=$(curl -s https://api.github.com/repos/tailscale/tailscale/releases/latest | grep 'tag_name' | cut -d '"' -f 4)
           echo "Latest Tailscale version: $latest_version"
-          # sed -i "s/PKG_VERSION:=.*/PKG_VERSION:=${{ env.latest_version }}/" feeds/packages/net/tailscale/Makefile
+          wget https://codeload.github.com/tailscale/tailscale/tar.gz/v${latest_version} -O dl/tailscale-${latest_version}.tar.gz
+          tailscale_hash=$(sha256sum dl/tailscale-${latest_version}.tar.gz | awk '{ print $1 }')
+          sed -i "s/PKG_VERSION:=.*/PKG_VERSION:=${latest_version}/" feeds/packages/net/tailscale/Makefile
+          sed -i "s/^PKG_HASH:=.*/PKG_HASH:=${tailscale_hash}/" feeds/packages/net/tailscale/Makefile
 
       - name: Add and tailscale and passwall luci
         run: |
