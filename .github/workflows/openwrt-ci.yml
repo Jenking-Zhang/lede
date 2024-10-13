@@ -73,16 +73,8 @@ jobs:
         run: |
           sed -i 's/#src-git helloworld/src-git helloworld/g' ./feeds.conf.default
           echo 'src-git istore https://github.com/linkease/istore;main' >> feeds.conf.default
-          echo "src-git tailscale-luci https://github.com/asvow/luci-app-tailscale.git" >> feeds.conf.default
-          echo "src-git passwall https://github.com/xiaorouji/openwrt-passwall.git" >> feeds.conf.default
+          echo 'src-git passwall https://github.com/xiaorouji/openwrt-passwall;main' >> feeds.conf.default
 
-      # - name: Add and tailscale and passwall luci
-      #   run: |
-      #     sed -i '/\/etc\/init\.d\/tailscale/d;/\/etc\/config\/tailscale/d;' feeds/packages/net/tailscale/Makefile
-      #     git clone https://github.com/asvow/luci-app-tailscale package/luci-app-tailscale
-          
-      #     git clone https://github.com/xiaorouji/openwrt-passwall.git package/luci-app-passwall
- 
       - name: Update feeds
         run: |
           ./scripts/feeds update -a
@@ -96,9 +88,13 @@ jobs:
           wget https://codeload.github.com/tailscale/tailscale/tar.gz/v${latest_version} -O dl/tailscale-${latest_version}.tar.gz
           tailscale_hash=$(sha256sum dl/tailscale-${latest_version}.tar.gz | awk '{ print $1 }')
 
-          sed -i '/\/etc\/init\.d\/tailscale/d;/\/etc\/config\/tailscale/d;' feeds/packages/net/tailscale/Makefile
           sed -i "s/PKG_VERSION:=.*/PKG_VERSION:=${latest_version}/" feeds/packages/net/tailscale/Makefile
           sed -i "s/^PKG_HASH:=.*/PKG_HASH:=${tailscale_hash}/" feeds/packages/net/tailscale/Makefile
+
+      - name: Add tailscale luci
+        run: |
+          sed -i '/\/etc\/init\.d\/tailscale/d;/\/etc\/config\/tailscale/d;' feeds/packages/net/tailscale/Makefile
+          git clone https://github.com/asvow/luci-app-tailscale package/luci-app-tailscale
 
       # - name: Generate configuration file
       #   run: make defconfig
