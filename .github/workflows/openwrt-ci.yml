@@ -156,7 +156,6 @@ jobs:
           name: OpenWrt_package
           path: ./artifact/package/
 
-
       - name: Upload firmware ALL
               uses: actions/upload-artifact@v3
               with:
